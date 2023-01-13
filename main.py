@@ -21,11 +21,10 @@ def test():
 
 
 if __name__ == '__main__':
-    # schedule.every(7).days.do(main).run() # запускать каждые 7 дней
+    schedule.every(7).days.do(main).run() # запускать каждые 7 дней
     
-    # while 1:
-    #     schedule.run_pending()
-    #     sleep(1)
-    main()
+    while 1:
+        schedule.run_pending()
+        sleep(1)
 
 
