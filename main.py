@@ -1,14 +1,17 @@
 from time import sleep
 import schedule
 from src.scraper import NemezidaScraper
+from src import settings
 
 
 def main():
-    scraper = NemezidaScraper(threads=1)
+    scraper = NemezidaScraper(threads=1,
+                              img_storage_path=settings.IMAGES_STORAGE_FOLDER_PATH,
+                              json_storage_path=settings.JSON_STORAGE_FOLDER_PATH)
 
     # pages_count = scraper.parse_search_pages_count() # общее кол-во страниц поиска
 
-    urls = scraper.parse_cards_urls(from_page=1, to_page=10)
+    urls = scraper.parse_cards_urls(from_page=1, to_page=1)
     cards = scraper.parse_cards(urls)
     scraper.save_cards(cards)
 

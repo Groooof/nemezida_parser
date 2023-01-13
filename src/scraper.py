@@ -2,6 +2,7 @@ from concurrent.futures import (
     ThreadPoolExecutor, 
     as_completed
 )
+from pathlib import Path
 import typing as tp
 
 from . import (
@@ -13,10 +14,10 @@ from . import (
 
 
 class NemezidaScraper:
-    def __init__(self, threads=1) -> None:
+    def __init__(self, img_storage_path: tp.Union[str, Path], json_storage_path: tp.Union[str, Path], threads=1) -> None:
         self._api = api.NemezidaApi()
-        self._images_storage = storages.ImagesStorage('./images')
-        self._json_storage = storages.JsonStorage('./data')
+        self._images_storage = storages.ImagesStorage(img_storage_path)
+        self._json_storage = storages.JsonStorage(json_storage_path)
         self._threads = threads
         self._thread_pool = ThreadPoolExecutor(max_workers=threads)
         
