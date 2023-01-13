@@ -24,18 +24,29 @@ class NemezidaScraper:
         self._thread_pool.shutdown()
     
     def parse_search_pages_count(self) -> int:
+        """
+        Получаем первую страницу поиска и парсим кол-во страниц.
+        """
         first_search_page_html = self._api.get_search_page()
         search_page = pages.SearchPage(first_search_page_html)
         pages_count = search_page.get_pages_count()
         return pages_count
     
     def parse_cards_urls_from_one_page(self, page: int) -> tp.List[str]:
+        """
+        Получаем страницу поиска по заданному номеру и парсим 
+        ссылки на все, содержащиеся на ней карточки.
+        """
         search_page_html = self._api.get_search_page(page)
         search_page = pages.SearchPage(search_page_html)
         urls = search_page.get_cards_links()
         return urls
     
     def parse_card(self, url: str) -> dto.ParsedCardData:
+        """
+        Получаем страницу карточки по заданному url и парсим 
+        все необходимые данные.
+        """
         card_page_html = self._api.get_card_page(url)
         card_page = pages.CardPage(card_page_html)
         
@@ -52,6 +63,11 @@ class NemezidaScraper:
                               photos_urls=photos_urls)
 
     def parse_cards_urls(self, from_page: int, to_page: int):
+        """
+        Получаем страницы поиска из заданного диапазона номеров и
+        парсим ссылки на все, содержащеся на них ссылки на карточки 
+        с использованием пула потоков.
+        """
         futures = [self._thread_pool.submit(self.parse_cards_urls_from_one_page, page) 
                 for page in range(from_page, to_page+1)]
         for future in as_completed(futures):
@@ -60,12 +76,19 @@ class NemezidaScraper:
                 
 
     def parse_cards(self, urls: tp.Iterable):
+        """
+        Получаем страницы карточек по заданному списку url и
+        парсим все необходимые данные с использованием пула потоков.
+        """
         futures = [self._thread_pool.submit(self.parse_card, url) 
                    for url in urls]
         for future in as_completed(futures):
             yield future.result()
                 
     def save_card(self, parsed_card: dto.ParsedCardData):
+        """
+        Сохраняем в хранилище данные и изображения одной карточки.
+        """
         photos_ids = []
         for url in parsed_card.photos_urls:
             image_bytes = self._api.get_image(url)
@@ -80,5 +103,8 @@ class NemezidaScraper:
         self._json_storage.save(card_for_save.as_dict())
                 
     def save_cards(self, parsed_cards: tp.Iterable):
+        """
+        Сохраняем в хранилище данные и изображения множества карточек.
+        """
         for card in parsed_cards:
             self.save_card(card)

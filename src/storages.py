@@ -1,12 +1,17 @@
-from pathlib import Path
-import typing as tp
 from random import randint
-import os
+from pathlib import Path
 import datetime as dt
+import typing as tp
 import json
+import os
 
 
 class SimpleFileStorage:
+    """
+    Базовый класс для простого хранилища файлов.
+    Создает папку по указанному пути для 
+    дальнейшего хранения файлов в ней.
+    """
     def __init__(self, path: tp.Union[str, Path]) -> None:
         self.path = Path(path)
         self._create_folder(path)
@@ -19,6 +24,12 @@ class SimpleFileStorage:
     
         
 class ImagesStorage(SimpleFileStorage):
+    """
+    Простое хранилище изображений.
+    Каждому изображению присваивается id, которое 
+    является именем файла.
+    Сохраняет с расширением .jpg.
+    """
         
     def save(self, bytes_data: bytes) -> int:
         id = self._generate_id()
@@ -35,6 +46,10 @@ class ImagesStorage(SimpleFileStorage):
         
         
 class JsonStorage(SimpleFileStorage):
+    """
+    Просто хранилище файлов json.
+    При сохранении файл именуется текущей датой и временем.
+    """
     
     def save(self, data: tp.Union[dict, tp.List[dict]]) -> None:
         current_datetime = dt.datetime.now().strftime('%Y.%m.%d %H:%M:%S.%f')
