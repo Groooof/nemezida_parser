@@ -9,14 +9,16 @@ class BaseApi:
     def _request(self, method, url: str, retry: int = 1, **kwargs) -> requests.Response:
         for i in range(1, retry+1):
             try:
+                print(f'Запрос\t{url}')
                 resp = method(url, timeout=3, **kwargs)
                 resp.raise_for_status()
             except (requests.exceptions.HTTPError, requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
                 if i == retry:
                     raise
                 sleep(1)
-                print(f'Retry #{i}')
+                print(f'Пов. #{i} {url}')
             else:
+                print(f'Ответ\t{url}')
                 return resp
             
 
