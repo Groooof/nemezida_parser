@@ -15,10 +15,6 @@ def main():
     cards = scraper.parse_cards(urls)
     scraper.save_cards(cards)
 
-def test():
-    for i in range(10):
-        if i % 2 == 0: yield i
-
 
 if __name__ == '__main__':
     schedule.every(7).days.do(main).run() # запускать каждые 7 дней
