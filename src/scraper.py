@@ -4,6 +4,7 @@ from concurrent.futures import (
 )
 from pathlib import Path
 import typing as tp
+import requests
 
 from . import (
     api,
@@ -38,12 +39,19 @@ class NemezidaScraper:
         Получаем страницу поиска по заданному номеру и парсим 
         ссылки на все, содержащиеся на ней карточки.
         """
-        search_page_html = self._api.get_search_page(page)
+        if page == 0:
+            return []
+        
+        try:
+            search_page_html = self._api.get_search_page(page)
+        except requests.exceptions.HTTPError:
+            return []
+        
         search_page = pages.SearchPage(search_page_html)
         urls = search_page.get_cards_links()
         return urls
     
-    def parse_card(self, url: str) -> dto.ParsedCardData:
+    def parse_card(self, url: str) -> tp.Optional[dto.ParsedCardData]:
         """
         Получаем страницу карточки по заданному url и парсим 
         все необходимые данные.
@@ -56,6 +64,9 @@ class NemezidaScraper:
         category = card_page.get_category()
         info = card_page.get_info()
         photos_urls = card_page.get_photos_urls()
+        
+        if not (fullname or date or category):
+            return None
 
         return dto.ParsedCardData(fullname=fullname,
                               date=date,
@@ -84,8 +95,9 @@ class NemezidaScraper:
         futures = [self._thread_pool.submit(self.parse_card, url) 
                    for url in urls]
         for future in as_completed(futures):
-            yield future.result()
-                
+            if future.result() is not None:
+                yield future.result()
+    
     def save_card(self, parsed_card: dto.ParsedCardData):
         """
         Сохраняем в хранилище данные и изображения одной карточки.
@@ -97,10 +109,10 @@ class NemezidaScraper:
             photos_ids.append(id)
         
         card_for_save = dto.CardDataForSave(fullname=parsed_card.fullname,
-                                        date=parsed_card.date,
-                                        category=parsed_card.category,
-                                        info=parsed_card.info,
-                                        photos_ids=photos_ids)
+                                            date=parsed_card.date,
+                                            category=parsed_card.category,
+                                            info=parsed_card.info,
+                                            photos_ids=photos_ids)
         self._json_storage.save(card_for_save.as_dict())
                 
     def save_cards(self, parsed_cards: tp.Iterable):
@@ -108,4 +120,7 @@ class NemezidaScraper:
         Сохраняем в хранилище данные и изображения множества карточек.
         """
         for card in parsed_cards:
-            self.save_card(card)
+            try:
+                self.save_card(card)
+            except Exception as ex:
+                print(f'При сохранении данных возникла ошибка:\n{ex}')
