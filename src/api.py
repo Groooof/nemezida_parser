@@ -30,8 +30,13 @@ class BaseApi:
                 return resp
             
 
+class BaseImageDownloadApi(BaseApi):
+    def download_image(self, url: str) -> bytes:
+        resp = self._request(requests.get, url)
+        return resp.content
 
-class NemezidaApi(BaseApi):
+
+class NemezidaApi(BaseImageDownloadApi):
     """
     Класс для работы с API сайта nemez1da.ru.
     """
@@ -50,12 +55,12 @@ class NemezidaApi(BaseApi):
         resp = self._request(requests.get, url, retry=3, headers=self.headers)
         return resp.text
     
-    def get_image(self, url: str) -> bytes:
-        resp = self._request(requests.get, url, retry=3, headers=self.headers)
-        return resp.content
-    
     def generate_search_page_url(self, page: tp.Union[int, str]) -> str:
         """
         Формирует ссылку на страницу поиска по её номеру.
         """
         return self.main_url + '/page' + f'/{str(page)}'
+    
+    def download_image(self, url: str) -> bytes:
+        resp = self._request(requests.get, url, retry=3, headers=self.headers)
+        return resp.content

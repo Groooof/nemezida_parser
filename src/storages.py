@@ -1,10 +1,8 @@
-from random import randint
 from pathlib import Path
-import datetime as dt
 import typing as tp
+import hashlib
 import json
 import os
-from urllib.parse import urlparse
 
 from . import dto
 
@@ -25,29 +23,18 @@ class SimpleFileStorage:
         except FileExistsError:
             pass
 
-        
-class ImagesStorage(SimpleFileStorage):
-    """
-    Простое хранилище изображений.
-    Каждому изображению присваивается id, которое 
-    является именем файла.
-    Сохраняет с расширением .jpg.
-    """
-        
-    def save(self, bytes_data: bytes) -> int:
-        id = self._generate_id()
-        filename = f'{str(id)}.jpg'
-        filepath = self._root.joinpath(filename)
-        
-        with open(filepath, 'wb') as f:
-            f.write(bytes_data)
-        return id
     
-    @staticmethod
-    def _generate_id() -> int:
-        return randint(1, 99999)
+class ImagesStorage:
+    """
+    Просто хранилище изображений.
+    Сохраняет изображения по заданному пути.
+    """
+
+    def save(self, path: tp.Union[str, Path], image_bytes: bytes) -> None:
+        with open(path, 'wb') as f:
+            f.write(image_bytes)
         
-        
+
 class JsonStorage:
     """
     Просто хранилище файлов json.
@@ -66,7 +53,21 @@ class NemezidaJsonStorage(JsonStorage, SimpleFileStorage):
     """
     
     def save(self, data: dto.CardDataForSave) -> None:
-        prepared_url = '-'.join(urlparse(data.url).path.strip('/').split('/'))
-        filename = f'{data.fullname}_{prepared_url}.json'
+        unique_digest = hashlib.blake2s(data.url.encode()).hexdigest()
+        filename = f'{data.fullname} ({unique_digest}).json'
         filepath = self._root.joinpath(filename)
         return super().save(filepath, data.as_dict())  
+
+
+class NemezidaImagesStorage(ImagesStorage, SimpleFileStorage):
+    """
+    Хранилище для изображений с сайта nemez1da.ru с определенной 
+    структурой.
+    """
+
+    def save(self, image_bytes: bytes, url: str) -> None:
+        unique_digest = hashlib.blake2s(url.encode()).hexdigest()
+        filename = f'{unique_digest}.jpg'
+        filepath = self._root.joinpath(filename)
+        super().save(filepath, image_bytes)
+        return filename

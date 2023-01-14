@@ -17,7 +17,7 @@ from . import (
 class NemezidaScraper:
     def __init__(self, img_storage_path: tp.Union[str, Path], json_storage_path: tp.Union[str, Path], threads=1) -> None:
         self._api = api.NemezidaApi()
-        self._images_storage = storages.ImagesStorage(img_storage_path)
+        self._images_storage = storages.NemezidaImagesStorage(img_storage_path)
         self._json_storage = storages.NemezidaJsonStorage(json_storage_path)
         self._threads = threads
         self._thread_pool = ThreadPoolExecutor(max_workers=threads)
@@ -105,8 +105,13 @@ class NemezidaScraper:
         """
         photos_ids = []
         for url in parsed_card.photos_urls:
-            image_bytes = self._api.get_image(url)
-            id = self._images_storage.save(image_bytes)
+            try:
+                image_bytes = self._api.download_image(url)
+            except Exception as ex:
+                print(f'При сохранении изображения произошла ошибка\nURL:{url}\n{ex}')
+                continue
+
+            id = self._images_storage.save(image_bytes, url)
             photos_ids.append(id)
         
         card_for_save = dto.CardDataForSave(fullname=parsed_card.fullname,
