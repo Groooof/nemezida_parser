@@ -11,7 +11,7 @@ def main():
 
     # pages_count = scraper.parse_search_pages_count() # общее кол-во страниц поиска
 
-    urls = scraper.parse_cards_urls(from_page=1, to_page=10)
+    urls = scraper.parse_cards_urls(from_page=1, to_page=1)
     cards = scraper.parse_cards(urls)
     scraper.save_cards(cards)
 

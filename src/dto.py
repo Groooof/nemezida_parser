@@ -17,6 +17,7 @@ class BaseCardData(BaseDataclass):
     date: str
     category: str
     info: dict
+    url: str
 
 
 @dataclass

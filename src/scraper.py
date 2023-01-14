@@ -18,7 +18,7 @@ class NemezidaScraper:
     def __init__(self, img_storage_path: tp.Union[str, Path], json_storage_path: tp.Union[str, Path], threads=1) -> None:
         self._api = api.NemezidaApi()
         self._images_storage = storages.ImagesStorage(img_storage_path)
-        self._json_storage = storages.JsonStorage(json_storage_path)
+        self._json_storage = storages.NemezidaJsonStorage(json_storage_path)
         self._threads = threads
         self._thread_pool = ThreadPoolExecutor(max_workers=threads)
         
@@ -69,10 +69,11 @@ class NemezidaScraper:
             return None
 
         return dto.ParsedCardData(fullname=fullname,
-                              date=date,
-                              category=category,
-                              info=info,
-                              photos_urls=photos_urls)
+                                  date=date,
+                                  category=category,
+                                  info=info,
+                                  photos_urls=photos_urls,
+                                  url=url)
 
     def parse_cards_urls(self, from_page: int, to_page: int):
         """
@@ -112,8 +113,9 @@ class NemezidaScraper:
                                             date=parsed_card.date,
                                             category=parsed_card.category,
                                             info=parsed_card.info,
-                                            photos_ids=photos_ids)
-        self._json_storage.save(card_for_save.as_dict())
+                                            photos_ids=photos_ids,
+                                            url=parsed_card.url)
+        self._json_storage.save(card_for_save)
                 
     def save_cards(self, parsed_cards: tp.Iterable):
         """
