@@ -54,7 +54,7 @@ class NemezidaJsonStorage(JsonStorage, SimpleFileStorage):
     
     def save(self, data: dto.CardDataForSave) -> None:
         unique_digest = hashlib.blake2s(data.url.encode()).hexdigest()
-        filename = f'{data.fullname} ({unique_digest}).json'
+        filename = f'{data.fullname[:30]}... ({unique_digest}).json'
         filepath = self._root.joinpath(filename)
         return super().save(filepath, data.as_dict())  
 

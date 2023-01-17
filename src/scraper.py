@@ -10,13 +10,14 @@ from . import (
     api,
     storages,
     pages,
-    dto
+    dto,
+    engine
 )
 
 
 class NemezidaScraper:
-    def __init__(self, img_storage_path: tp.Union[str, Path], json_storage_path: tp.Union[str, Path], threads=1) -> None:
-        self._api = api.NemezidaApi()
+    def __init__(self, engine: engine.RequestsEngine, img_storage_path: tp.Union[str, Path], json_storage_path: tp.Union[str, Path], threads=1) -> None:
+        self._api = api.NemezidaApi(engine)
         self._images_storage = storages.NemezidaImagesStorage(img_storage_path)
         self._json_storage = storages.NemezidaJsonStorage(json_storage_path)
         self._threads = threads
@@ -56,7 +57,11 @@ class NemezidaScraper:
         Получаем страницу карточки по заданному url и парсим 
         все необходимые данные.
         """
-        card_page_html = self._api.get_card_page(url)
+        try:
+            card_page_html = self._api.get_card_page(url)
+        except:
+            return None
+        
         card_page = pages.CardPage(card_page_html)
         
         fullname = card_page.get_fullname()
@@ -107,8 +112,7 @@ class NemezidaScraper:
         for url in parsed_card.photos_urls:
             try:
                 image_bytes = self._api.download_image(url)
-            except Exception as ex:
-                print(f'При сохранении изображения произошла ошибка\nURL:{url}\n{ex}')
+            except:
                 continue
 
             id = self._images_storage.save(image_bytes, url)
@@ -126,8 +130,12 @@ class NemezidaScraper:
         """
         Сохраняем в хранилище данные и изображения множества карточек.
         """
+        count = 0
         for card in parsed_cards:
             try:
                 self.save_card(card)
             except Exception as ex:
                 print(f'При сохранении данных возникла ошибка:\n{ex}')
+            else:
+                count += 1
+        return count

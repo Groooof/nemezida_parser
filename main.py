@@ -1,11 +1,20 @@
 from time import sleep
 import schedule
 from src.scraper import NemezidaScraper
+from src.engine import RequestsEngine
 from src import settings
+from src import callbacks
 
 
 def main():
-    scraper = NemezidaScraper(threads=settings.THREADS_COUNT,
+    engine = RequestsEngine(default_timeout=10,
+                            default_retries=10,
+                            before_request=callbacks.before_request,
+                            after_request=callbacks.after_request,
+                            on_exception=callbacks.on_request_exception)
+    
+    scraper = NemezidaScraper(engine=engine,
+                              threads=settings.THREADS_COUNT,
                               img_storage_path=settings.IMAGES_STORAGE_FOLDER_PATH,
                               json_storage_path=settings.JSON_STORAGE_FOLDER_PATH)
 
@@ -21,8 +30,10 @@ def main():
     
     urls = scraper.parse_cards_urls(from_page=settings.FROM_PAGE, to_page=settings.TO_PAGE)
     cards = scraper.parse_cards(urls)
-    scraper.save_cards(cards)
+    count = scraper.save_cards(cards)
     print('Парсер закончил работу')
+    print(f'Собрано карточек: {count}')
+
 
 if __name__ == '__main__':
     schedule.every(7).days.do(main).run() # запускать каждые 7 дней
